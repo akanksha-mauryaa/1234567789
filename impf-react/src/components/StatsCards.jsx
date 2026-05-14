@@ -18,9 +18,9 @@ export default function StatsCards({ items }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
       {cards.map((c, i) => (
-        <div key={i} className="glass p-5 md:p-6 rounded-2xl flex flex-col justify-between hover:bg-surface/50 transition-all hover:scale-[1.02] duration-300">
-          <div className="text-[10px] text-muted font-black tracking-[0.2em] uppercase">{c.label}</div>
-          <div className={`text-3xl md:text-4xl font-mono mt-4 font-black ${c.color} leading-none`}>{c.value}</div>
+        <div key={i} className="glass p-6 rounded-2xl flex flex-col justify-between hover:bg-surface/50 transition-all hover:scale-[1.03] hover:shadow-xl duration-500 group">
+          <div className="text-[10px] text-muted font-black tracking-[0.2em] uppercase group-hover:text-accent transition-colors">{c.label}</div>
+          <div className={`text-4xl md:text-5xl font-mono mt-5 font-black ${c.color} leading-none tracking-tighter`}>{c.value}</div>
         </div>
       ))}
     </div>

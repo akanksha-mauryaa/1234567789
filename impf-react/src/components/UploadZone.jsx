@@ -60,11 +60,11 @@ export default function UploadZone({ onUploadComplete }) {
   }
 
   return (
-    <div className="glass rounded-3xl border border-border p-12 md:p-20 flex flex-col items-center justify-center relative overflow-hidden group min-h-[500px]">
+    <div className="glass rounded-[2rem] border border-border p-6 md:p-16 lg:p-24 flex flex-col items-center justify-center relative overflow-hidden group min-h-[400px] md:min-h-[600px]">
       {status === 'uploading' && (
-        <div className="absolute inset-0 bg-bg/90 backdrop-blur-md z-10 flex flex-col items-center justify-center">
-          <div className="w-16 h-16 border-4 border-border border-t-accent rounded-full animate-spin mb-6"></div>
-          <p className="font-mono text-accent text-lg font-bold tracking-[0.2em] animate-pulse">INITIATING AI PIPELINE...</p>
+        <div className="absolute inset-0 bg-bg/95 backdrop-blur-xl z-20 flex flex-col items-center justify-center">
+          <div className="w-20 h-20 border-4 border-border border-t-accent rounded-full animate-spin mb-8 shadow-[0_0_30px_rgba(225,29,72,0.2)]"></div>
+          <p className="font-mono text-accent text-xl font-black tracking-[0.3em] animate-pulse">SYSTEM_SCAN_ACTIVE</p>
         </div>
       )}
 

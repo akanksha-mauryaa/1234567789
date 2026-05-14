@@ -18,12 +18,12 @@ export default function ResultsTable({ items, title, emptyMessage }) {
         </div>
       )}
       <div className="overflow-x-auto flex-1 p-0 custom-scrollbar">
-        <table className="w-full text-left border-collapse text-sm min-w-[800px]">
-          <thead className="sticky top-0 bg-[var(--surface)]/90 backdrop-blur border-b border-border text-muted font-mono z-10">
+        <table className="w-full text-left border-collapse text-sm min-w-[1000px]">
+          <thead className="sticky top-0 bg-[var(--surface)]/95 backdrop-blur-md border-b border-border text-muted font-mono z-20">
             <tr>
-              <th className="p-3 font-normal">File Name</th>
-              <th className="p-3 font-normal">Type</th>
-              <th className="p-3 font-normal">Labels</th>
+              <th className="p-4 font-normal sticky left-0 bg-[var(--surface)] z-30 border-r border-border/50 shadow-[4px_0_10px_-2px_rgba(0,0,0,0.05)]">File Name</th>
+              <th className="p-4 font-normal">Type</th>
+              <th className="p-4 font-normal">Labels</th>
               <th className="p-3 font-normal">Confidence</th>
               <th className="p-3 font-normal">Count</th>
               <th className="p-3 font-normal">Safe</th>
@@ -55,9 +55,9 @@ export default function ResultsTable({ items, title, emptyMessage }) {
 
               return (
                 <tr key={i} className="border-b border-border/50 hover:bg-surface/50 transition-colors group">
-                  <td className="p-3 font-medium text-primary max-w-[200px] truncate" title={fname}>{fname}</td>
-                  <td className="p-3">
-                    <span className={`inline-block px-2 py-1 rounded font-mono text-xs uppercase ${typeClass}`}>
+                  <td className="p-4 font-bold text-primary max-w-[250px] truncate sticky left-0 bg-[var(--surface)] z-10 border-r border-border/50 group-hover:bg-[var(--surface)] transition-colors shadow-[4px_0_10px_-2px_rgba(0,0,0,0.05)]" title={fname}>{fname}</td>
+                  <td className="p-4">
+                    <span className={`inline-block px-3 py-1 rounded-lg font-mono text-xs font-bold uppercase ${typeClass}`}>
                       {item.file_type || 'unknown'}
                     </span>
                   </td>

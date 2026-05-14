@@ -23,27 +23,28 @@ export default function Navbar({ page, setPage, unsafeCount, theme, toggleTheme 
           </div>
         </div>
 
-        {/* Desktop Nav */}
-        <nav className="flex items-center gap-1 md:gap-4">
-          {nav.map(item => (
+        {/* Navigation Links */}
+        <nav className="flex items-center gap-1 sm:gap-2">
+          {nav.map((item) => (
             <button
               key={item.id}
               onClick={() => setPage(item.id)}
-              className={`relative flex items-center gap-2 px-4 py-3 rounded-lg text-base transition-all duration-200 group
+              className={`relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all duration-300 group
                 ${page === item.id
-                  ? 'text-accent font-semibold'
+                  ? 'text-accent bg-accent/5 font-bold'
                   : 'text-muted hover:text-primary hover:bg-card'
                 }`}
             >
-              <span className="text-base">{item.icon}</span>
-              <span className="hidden lg:block">{item.label}</span>
+              <span className="text-lg">{item.icon}</span>
+              <span className="hidden md:inline tracking-wide">{item.label}</span>
+              
               {item.badge > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[9px] text-white">
                   {item.badge}
                 </span>
               )}
               {page === item.id && (
-                <span className="absolute bottom-0 left-0 h-0.5 w-full bg-accent rounded-full" />
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-accent rounded-full" />
               )}
             </button>
           ))}
