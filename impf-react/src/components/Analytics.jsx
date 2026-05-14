@@ -8,7 +8,7 @@ export default function Analytics({ items }) {
     return acc
   }, {})
   const pieData = Object.keys(typeCount).map(k => ({ name: k.toUpperCase(), value: typeCount[k] }))
-  const COLORS = ['#7c3aed', '#00e5ff', '#ffd32a', '#6b6b8a']
+  const COLORS = ['#4169e1', '#00f2ff', '#3b82f6', '#cbd5e1']
 
   // Chart 2: Top Labels
   const labelCount = {}
@@ -34,74 +34,80 @@ export default function Analytics({ items }) {
     { name: 'Safe', value: safeCount },
     { name: 'Unsafe', value: unsafeCount }
   ]
-  const SAFE_COLORS = ['#00ff88', '#ff4757']
+  const SAFE_COLORS = ['#10b981', '#ef4444'] // Brighter Emerald and Red for both modes
 
   if (items.length === 0) return <div className="text-muted text-center p-10 font-mono">No data to analyze.</div>
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
       
       {/* File Types */}
-      <div className="glass p-6 rounded-xl border border-border">
-        <h3 className="font-mono text-xs text-muted mb-6 tracking-widest">// FILE TYPE DISTRIBUTION</h3>
-        <div className="h-64">
+      <div className="glass p-6 md:p-10 rounded-2xl border border-border">
+        <h3 className="font-mono text-xs text-muted mb-10 tracking-[0.2em] uppercase">// File Type Distribution</h3>
+        <div className="h-72 md:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+              <Pie data={pieData} innerRadius={70} outerRadius={90} paddingAngle={5} dataKey="value">
                 {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
               </Pie>
               <Tooltip 
-                contentStyle={{ background: '#0e0e16', border: '1px solid #1e1e30', borderRadius: '8px' }}
-                itemStyle={{ color: '#00e5ff', fontFamily: 'Space Mono' }}
+                contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}
+                itemStyle={{ color: 'var(--accent)', fontFamily: 'Space Mono', fontSize: '12px' }}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex justify-center gap-4 mt-4 font-mono text-[10px]">
+        <div className="flex flex-wrap justify-center gap-6 mt-10 font-mono text-xs">
           {pieData.map((d, i) => (
-            <div key={i} className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full" style={{ background: COLORS[i % COLORS.length] }}></span>
-              <span className="text-primary">{d.name} ({d.value})</span>
+            <div key={i} className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full" style={{ background: COLORS[i % COLORS.length] }}></span>
+              <span className="text-primary font-bold">{d.name} <span className="text-muted">({d.value})</span></span>
             </div>
           ))}
         </div>
       </div>
 
       {/* Safety Ratio */}
-      <div className="glass p-6 rounded-xl border border-border">
-        <h3 className="font-mono text-xs text-muted mb-6 tracking-widest">// CONTENT SAFETY RATIO</h3>
-        <div className="h-64">
+      <div className="glass p-6 md:p-10 rounded-2xl border border-border">
+        <h3 className="font-mono text-xs text-muted mb-10 tracking-[0.2em] uppercase">// Content Safety Ratio</h3>
+        <div className="h-72 md:h-80">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={safetyData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+              <Pie data={safetyData} innerRadius={70} outerRadius={90} paddingAngle={5} dataKey="value">
                 {safetyData.map((entry, index) => <Cell key={`cell-${index}`} fill={SAFE_COLORS[index]} />)}
               </Pie>
               <Tooltip 
-                contentStyle={{ background: '#0e0e16', border: '1px solid #1e1e30', borderRadius: '8px' }}
-                itemStyle={{ color: '#00e5ff', fontFamily: 'Space Mono' }}
+                contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}
+                itemStyle={{ color: 'var(--accent)', fontFamily: 'Space Mono', fontSize: '12px' }}
               />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div className="flex justify-center gap-4 mt-4 font-mono text-[10px]">
-          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-neon"></span><span className="text-primary">Safe ({safeCount})</span></div>
-          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-danger"></span><span className="text-primary">Unsafe ({unsafeCount})</span></div>
+        <div className="flex justify-center gap-8 mt-10 font-mono text-xs">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-[#10b981]"></span>
+            <span className="text-primary font-bold">Safe <span className="text-muted">({safeCount})</span></span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-[#ef4444]"></span>
+            <span className="text-primary font-bold">Unsafe <span className="text-muted">({unsafeCount})</span></span>
+          </div>
         </div>
       </div>
 
       {/* Top Labels Bar Chart */}
-      <div className="glass p-6 rounded-xl border border-border md:col-span-2">
-        <h3 className="font-mono text-xs text-muted mb-6 tracking-widest">// TOP 10 AI LABELS DETECTED</h3>
-        <div className="h-72">
+      <div className="glass p-6 md:p-10 rounded-2xl border border-border lg:col-span-2">
+        <h3 className="font-mono text-xs text-muted mb-10 tracking-[0.2em] uppercase">// Top 10 AI Labels Detected</h3>
+        <div className="h-80 md:h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <XAxis dataKey="name" stroke="#6b6b8a" fontSize={10} tickLine={false} axisLine={false} />
-              <YAxis stroke="#6b6b8a" fontSize={10} tickLine={false} axisLine={false} />
+            <BarChart data={barData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+              <XAxis dataKey="name" stroke="var(--muted)" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="var(--muted)" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip 
-                cursor={{ fill: 'rgba(0,229,255,0.05)' }}
-                contentStyle={{ background: '#0e0e16', border: '1px solid #1e1e30', borderRadius: '8px' }}
+                cursor={{ fill: 'var(--accent)', opacity: 0.1 }}
+                contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}
               />
-              <Bar dataKey="count" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" fill="var(--accent2)" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

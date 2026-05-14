@@ -1,20 +1,21 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
-        bg:      '#050508',
-        surface: '#0e0e16',
-        card:    '#13131f',
-        border:  '#1e1e30',
-        accent:  '#00e5ff',
-        accent2: '#7c3aed',
-        neon:    '#00ff88',
-        danger:  '#ff4757',
-        warn:    '#ffd32a',
-        muted:   '#6b6b8a',
-        primary: '#e8e8f0',
+        bg:      'var(--bg)',
+        surface: 'var(--surface)',
+        card:    'var(--card)',
+        border:  'var(--border)',
+        accent:  'var(--accent)',
+        accent2: 'var(--accent2)',
+        neon:    'var(--accent2)',
+        danger:  '#ef4444',
+        warn:    '#f59e0b',
+        muted:   'var(--muted)',
+        primary: 'var(--primary)',
       },
       fontFamily: {
         mono: ['Space Mono', 'monospace'],

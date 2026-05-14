@@ -12,7 +12,7 @@ export default function Dashboard({ items }) {
       
       <StatsCards items={items} />
 
-      <div className="h-[400px]">
+      <div className="min-h-[400px] lg:h-[500px]">
         <ResultsTable 
           items={recentItems} 
           title="RECENT PROCESSING ACTIVITY" 

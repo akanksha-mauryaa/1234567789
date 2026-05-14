@@ -2,13 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg: #fff1f2;      /* Baby Pink Background */
+  --surface: #ffffff;
+  --card: #ffffff;
+  --border: #fecdd3;  /* Soft Pink Border */
+  --primary: #881337; /* Deep Rose for visibility */
+  --muted: #9f1239;
+  --accent: #e11d48;  /* Vibrant Rose */
+  --accent2: #7c3aed;
+  --shadow: 0 10px 15px -3px rgba(159, 18, 57, 0.1), 0 4px 6px -2px rgba(159, 18, 57, 0.05);
+}
+
+.dark {
+  --bg: #001a4d;      /* Deep Royal Navy */
+  --surface: #4169e1; /* Real Royal Blue */
+  --card: #4d79ff;
+  --border: #668cff;
+  --primary: #ffffff; /* Pure White */
+  --muted: #cbd5e1;   /* Light Slate */
+  --accent: #00f2ff;  /* Electric Cyan */
+  --accent2: #ffffff; /* White highlights */
+  --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background-color: #050508;
-  color: #e8e8f0;
+  background-color: var(--bg);
+  color: var(--primary);
   font-family: 'DM Sans', sans-serif;
-  overflow: hidden;
+  font-size: 16px; /* Increased base font size */
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease, font-size 0.2s ease;
 }
 
 /* Grid background */
@@ -19,17 +45,31 @@ body {
   background-size: 40px 40px;
 }
 
+.dark .grid-bg {
+  background-image:
+    linear-gradient(rgba(0,229,255,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.05) 1px, transparent 1px);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: #0e0e16; }
-::-webkit-scrollbar-thumb { background: #1e1e30; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,229,255,.2); }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* Glassmorphism card */
 .glass {
-  background: rgba(19,19,31,0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid #1e1e30;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow);
+}
+
+.dark .glass {
+  background: rgba(19, 19, 31, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow);
 }
 
 /* Glow effects */
@@ -47,3 +87,4 @@ body {
 .animate-scan {
   animation: scan 3s linear infinite;
 }
+

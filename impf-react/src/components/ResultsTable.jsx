@@ -17,9 +17,9 @@ export default function ResultsTable({ items, title, emptyMessage }) {
           <span className="text-accent">{items.length} RECORDS</span>
         </div>
       )}
-      <div className="overflow-auto flex-1 p-0 custom-scrollbar">
-        <table className="w-full text-left border-collapse text-[11px]">
-          <thead className="sticky top-0 bg-surface/90 backdrop-blur border-b border-border text-muted font-mono z-10">
+      <div className="overflow-x-auto flex-1 p-0 custom-scrollbar">
+        <table className="w-full text-left border-collapse text-sm min-w-[800px]">
+          <thead className="sticky top-0 bg-[var(--surface)]/90 backdrop-blur border-b border-border text-muted font-mono z-10">
             <tr>
               <th className="p-3 font-normal">File Name</th>
               <th className="p-3 font-normal">Type</th>
@@ -44,12 +44,12 @@ export default function ResultsTable({ items, title, emptyMessage }) {
                 return max
               }, 0)
 
-              let typeClass = 'bg-[#6b6b8a1a] text-muted border border-[#6b6b8a33]'
-              if (item.file_type === 'image') typeClass = 'bg-[#7c3aed1a] text-[#a78bfa] border border-[#7c3aed33]'
-              if (item.file_type === 'document') typeClass = 'bg-[#00e5ff1a] text-accent border border-[#00e5ff33]'
-              if (item.file_type === 'data') typeClass = 'bg-[#ffd32a1a] text-warn border border-[#ffd32a33]'
+              let typeClass = 'bg-[var(--muted)]/10 text-[var(--muted)] border border-[var(--muted)]/20'
+              if (item.file_type === 'image') typeClass = 'bg-[var(--accent2)]/10 text-[var(--accent2)] border border-[var(--accent2)]/20'
+              if (item.file_type === 'document') typeClass = 'bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20'
+              if (item.file_type === 'data') typeClass = 'bg-warn/10 text-warn border border-warn/20'
 
-              let statusClass = 'text-muted'
+              let statusClass = 'text-[var(--muted)]'
               if (item.status === 'completed') statusClass = 'text-neon'
               if (item.status === 'error' || item.status === 'failed') statusClass = 'text-danger'
 
@@ -57,11 +57,11 @@ export default function ResultsTable({ items, title, emptyMessage }) {
                 <tr key={i} className="border-b border-border/50 hover:bg-surface/50 transition-colors group">
                   <td className="p-3 font-medium text-primary max-w-[200px] truncate" title={fname}>{fname}</td>
                   <td className="p-3">
-                    <span className={`inline-block px-2 py-0.5 rounded font-mono text-[9px] uppercase ${typeClass}`}>
+                    <span className={`inline-block px-2 py-1 rounded font-mono text-xs uppercase ${typeClass}`}>
                       {item.file_type || 'unknown'}
                     </span>
                   </td>
-                  <td className="p-3"><LabelTags labels={item.labels} /></td>
+                  <td className="p-3 py-4"><LabelTags labels={item.labels} /></td>
                   <td className="p-3 font-mono">
                     {topConf > 0 ? (
                       <span className={topConf > 90 ? 'text-neon' : 'text-accent'}>
@@ -70,12 +70,12 @@ export default function ResultsTable({ items, title, emptyMessage }) {
                     ) : '—'}
                   </td>
                   <td className="p-3 font-mono text-muted">{item.label_count ?? '—'}</td>
-                  <td className="p-3 font-mono text-[11px]">
+                  <td className="p-3 font-mono text-sm">
                     {safe 
                       ? <span className="text-neon">✓ YES</span> 
                       : <span className="text-danger">✕ NO</span>}
                   </td>
-                  <td className="p-3 font-mono text-[10px]">
+                  <td className="p-3 font-mono text-xs">
                     <span className={statusClass}>{item.status || '—'}</span>
                   </td>
                   <td className="p-3 font-mono text-[10px] text-muted">{ts}</td>

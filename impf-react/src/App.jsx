@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import Sidebar from './components/Sidebar'
+import Navbar from './components/Navbar'
 import Dashboard from './components/Dashboard'
 import UploadZone from './components/UploadZone'
 import ResultsTable from './components/ResultsTable'
@@ -11,12 +11,18 @@ export default function App() {
   const [page, setPage] = useState('dashboard')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(newTheme)
+    localStorage.setItem('theme', newTheme)
+  }
 
   const loadData = async () => {
     try {
       setLoading(true)
       const data = await fetchResults()
-      // Sort newest first
       data.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))
       setItems(data)
     } catch (err) {
@@ -28,7 +34,6 @@ export default function App() {
 
   useEffect(() => {
     loadData()
-    // Auto refresh every 30s
     const interval = setInterval(loadData, 30000)
     return () => clearInterval(interval)
   }, [])
@@ -38,8 +43,8 @@ export default function App() {
   const renderPage = () => {
     if (loading && items.length === 0) {
       return (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-border border-t-accent rounded-full animate-spin"></div>
+        <div className="flex-1 flex items-center justify-center min-h-[400px]">
+          <div className="w-10 h-10 border-4 border-border border-t-accent rounded-full animate-spin"></div>
         </div>
       )
     }
@@ -49,8 +54,8 @@ export default function App() {
         return <Dashboard items={items} />
       case 'upload':
         return (
-          <div className="max-w-3xl mx-auto mt-10">
-            <h2 className="text-xl font-medium tracking-wide mb-6">Upload Media</h2>
+          <div className="max-w-3xl mx-auto mt-10 animate-fadeIn">
+            <h2 className="text-2xl font-bold tracking-tight mb-8">Upload Media</h2>
             <UploadZone onUploadComplete={async () => {
               await loadData()
               setPage('current')
@@ -58,26 +63,26 @@ export default function App() {
           </div>
         )
       case 'current':
-        return <CurrentFile item={items[0]} />
+        return <div className="animate-fadeIn"><CurrentFile item={items[0]} /></div>
       case 'files':
-        return <ResultsTable items={items} title="ALL FILES" />
+        return <div className="animate-fadeIn"><ResultsTable items={items} title="ALL FILES" /></div>
       case 'unsafe':
-        return <ResultsTable items={unsafeItems} title="UNSAFE FILES DETECTED" emptyMessage="No unsafe files found. Great!" />
+        return <div className="animate-fadeIn"><ResultsTable items={unsafeItems} title="UNSAFE FILES DETECTED" emptyMessage="No unsafe files found. Great!" /></div>
       case 'analytics':
-        return <Analytics items={items} />
+        return <div className="animate-fadeIn"><Analytics items={items} /></div>
       case 'settings':
         return (
-          <div className="max-w-xl">
-            <h2 className="text-xl font-medium tracking-wide mb-6">Settings</h2>
-            <div className="glass p-6 rounded-xl border border-border">
-              <label className="block text-xs font-mono text-muted mb-2">API GATEWAY URL</label>
+          <div className="max-w-xl mx-auto animate-fadeIn">
+            <h2 className="text-2xl font-bold tracking-tight mb-8">Settings</h2>
+            <div className="glass p-8 rounded-2xl border border-border">
+              <label className="block text-[10px] font-bold uppercase tracking-widest text-muted mb-3">API GATEWAY URL</label>
               <input 
                 type="text" 
                 readOnly
                 value={import.meta.env.VITE_API_BASE || 'Loaded from .env'}
-                className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm text-primary font-mono outline-none"
+                className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm text-primary font-mono outline-none shadow-sm"
               />
-              <p className="text-[10px] text-muted mt-2">Edit your .env file to change the base URL.</p>
+              <p className="text-xs text-muted mt-4">Edit your .env file to change the base URL configuration.</p>
             </div>
           </div>
         )
@@ -87,24 +92,21 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-bg text-primary overflow-hidden grid-bg">
-      <Sidebar page={page} setPage={setPage} unsafeCount={unsafeItems.length} />
-      
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header className="h-16 border-b border-border bg-surface/50 backdrop-blur flex items-center justify-between px-8 shrink-0">
-          <h1 className="text-lg font-medium tracking-wide capitalize">{page.replace('-', ' ')}</h1>
-          <button 
-            onClick={loadData}
-            className="flex items-center gap-2 px-3 py-1.5 rounded bg-card border border-border text-xs font-mono text-muted hover:text-accent hover:border-accent/30 transition-colors"
-          >
-            <span className={loading ? 'animate-spin' : ''}>↻</span> REFRESH
-          </button>
-        </header>
-
-        <div className="flex-1 overflow-auto p-8 custom-scrollbar">
+    <div className={`${theme} transition-colors duration-300`}>
+      <div className="min-h-screen bg-bg text-primary grid-bg selection:bg-accent/30">
+        <Navbar 
+          page={page} 
+          setPage={setPage} 
+          unsafeCount={unsafeItems.length} 
+          theme={theme}
+          toggleTheme={toggleTheme}
+        />
+        
+        <main className="max-w-[1600px] mx-auto p-6 md:p-10">
           {renderPage()}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }
+
