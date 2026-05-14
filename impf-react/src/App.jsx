@@ -12,6 +12,7 @@ export default function App() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
+  const [seenUnsafeIds, setSeenUnsafeIds] = useState(JSON.parse(localStorage.getItem('seenUnsafeIds') || '[]'))
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
@@ -38,7 +39,22 @@ export default function App() {
     return () => clearInterval(interval)
   }, [])
 
+  // If user is on the unsafe page, mark all current unsafe items as seen
+  useEffect(() => {
+    if (page === 'unsafe') {
+      const currentUnsafeIds = items.filter(i => i.is_safe === false || i.is_safe === 'false').map(i => i.file_id || i.s3_key)
+      if (currentUnsafeIds.length > 0) {
+        const newSeen = Array.from(new Set([...seenUnsafeIds, ...currentUnsafeIds]))
+        if (newSeen.length !== seenUnsafeIds.length) {
+          setSeenUnsafeIds(newSeen)
+          localStorage.setItem('seenUnsafeIds', JSON.stringify(newSeen))
+        }
+      }
+    }
+  }, [page, items, seenUnsafeIds])
+
   const unsafeItems = items.filter(i => i.is_safe === false || i.is_safe === 'false')
+  const newUnsafeCount = unsafeItems.filter(i => !seenUnsafeIds.includes(i.file_id || i.s3_key)).length
 
   const renderPage = () => {
     if (loading && items.length === 0) {
@@ -97,7 +113,7 @@ export default function App() {
         <Navbar 
           page={page} 
           setPage={setPage} 
-          unsafeCount={unsafeItems.length} 
+          unsafeCount={newUnsafeCount} 
           theme={theme}
           toggleTheme={toggleTheme}
         />
