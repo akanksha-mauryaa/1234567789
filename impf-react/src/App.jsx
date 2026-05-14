@@ -101,8 +101,19 @@ export default function App() {
           theme={theme}
           toggleTheme={toggleTheme}
         />
+
+        {/* Mobile Theme Bar */}
+        <div className="sm:hidden border-b border-border bg-surface/50 backdrop-blur-sm px-6 py-2 flex justify-between items-center">
+          <span className="text-[10px] font-bold text-muted tracking-widest uppercase">Display Mode</span>
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-bold transition-all active:scale-95"
+          >
+            {theme === 'dark' ? '🌙 DARK' : '☀️ LIGHT'}
+          </button>
+        </div>
         
-        <main className="max-w-[1600px] mx-auto p-6 md:p-10">
+        <main className="max-w-[1600px] mx-auto p-4 sm:p-6 md:p-10">
           {renderPage()}
         </main>
       </div>

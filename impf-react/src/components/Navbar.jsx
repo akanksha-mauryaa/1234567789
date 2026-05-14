@@ -51,7 +51,7 @@ export default function Navbar({ page, setPage, unsafeCount, theme, toggleTheme 
         </nav>
 
         {/* Controls */}
-        <div className="flex items-center gap-4">
+        <div className="hidden sm:flex items-center gap-4">
           <button
             onClick={toggleTheme}
             className="px-3 py-1.5 rounded-md border border-border text-[10px] font-bold uppercase tracking-widest hover:bg-card hover:border-accent transition-all duration-200"
