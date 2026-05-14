@@ -36,11 +36,10 @@ export default function CurrentFile({ item }) {
             <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
             FILE NAME // ANALYSIS ACTIVE
           </h3>
-          <p className="text-xl font-medium text-primary break-all">{fname}</p>
-        </div>
-        <div className="md:text-right z-20">
-          <h3 className="text-[10px] font-mono tracking-widest text-muted mb-2">TIMESTAMP</h3>
-          <p className="text-sm font-mono text-primary bg-surface/50 px-3 py-1.5 rounded-lg border border-border/50">{ts}</p>
+          <h2 className="text-3xl md:text-5xl font-black tracking-tighter text-primary break-all leading-tight" title={fname}>
+            {fname}
+          </h2>
+          <p className="text-xs font-mono text-muted mt-2 tracking-widest uppercase">// {item.timestamp || 'No Timestamp'}</p>
         </div>
       </div>
 
