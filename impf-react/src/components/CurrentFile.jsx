@@ -17,11 +17,44 @@ export default function CurrentFile({ item }) {
   const displayLabels = Array.isArray(item.labels) ? item.labels : []
   const modDetails = Array.isArray(item.moderation_details) ? item.moderation_details : []
   
-  // Get top 5 labels for the breakdown
+  // Get top 8 labels for the breakdown (increased from 5)
   const topLabels = displayLabels
     .filter(l => typeof l === 'object')
     .sort((a, b) => b.confidence - a.confidence)
-    .slice(0, 5)
+    .slice(0, 8)
+
+  // Categorize labels for document intelligence view
+  const docTypeLabel = displayLabels.find(l => l?.name?.startsWith('DocType:'))
+  const topicLabels = displayLabels.filter(l => l?.name?.startsWith('Topic:'))
+  const entityLabels = displayLabels.filter(l => 
+    l?.name && !l.name.startsWith('Topic:') && 
+    !l.name.startsWith('Language:') && 
+    !l.name.startsWith('Sentiment:') && 
+    !l.name.startsWith('Words:') &&
+    !l.name.startsWith('DocType:') &&
+    !l.name.startsWith('⚠')
+  )
+  const sentimentLabel = displayLabels.find(l => l?.name?.startsWith('Sentiment:'))
+  const languageLabel = displayLabels.find(l => l?.name?.startsWith('Language:'))
+  const wordCountLabel = displayLabels.find(l => l?.name?.startsWith('Words:'))
+  const piiLabel = displayLabels.find(l => l?.name?.startsWith('⚠'))
+
+  // Document stats from backend
+  const docStats = item.doc_stats || null
+  const isDocument = item.file_type === 'document'
+
+  // Bar color based on label category
+  const getBarColor = (name, confidence) => {
+    if (name?.startsWith('DocType:')) return 'bg-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.4)]'
+    if (name?.startsWith('Topic:')) return 'bg-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.4)]'
+    if (name?.startsWith('Sentiment:')) return 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+    if (name?.startsWith('Language:')) return 'bg-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+    if (name?.startsWith('Words:')) return 'bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]'
+    if (confidence > 90) return 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]'
+    return 'bg-accent'
+  }
+  const fileExt = fname.includes('.') ? fname.split('.').pop().toUpperCase() : ''
+  const displayType = fileExt ? `${item.file_type || 'unknown'} (${fileExt})` : (item.file_type || 'unknown')
 
   return (
     <div className="space-y-6">
@@ -40,13 +73,22 @@ export default function CurrentFile({ item }) {
             {fname}
           </h2>
           <p className="text-xs font-mono text-muted mt-2 tracking-widest uppercase">// {item.timestamp || 'No Timestamp'}</p>
+          {/* Document Type Badge */}
+          {docTypeLabel && (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-pink-500/10 border border-pink-500/30 rounded-lg">
+              <span className="text-[10px] font-mono text-pink-400 tracking-wider">CLASSIFIED AS</span>
+              <span className="text-sm font-black text-pink-400 uppercase">{docTypeLabel.name.replace('DocType: ', '')}</span>
+              <span className="text-[10px] font-mono text-pink-400/60">{Math.round(docTypeLabel.confidence)}%</span>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div className="glass p-5 rounded-2xl border border-border hover:bg-surface/50 transition-colors">
           <div className="text-[10px] text-muted font-mono tracking-wider">TYPE</div>
-          <div className="text-2xl md:text-3xl font-mono mt-3 font-bold text-accent uppercase">{item.file_type || 'unknown'}</div>
+          <div className="text-2xl md:text-3xl font-mono mt-3 font-bold text-accent uppercase">{displayType}</div>
         </div>
         <div className="glass p-5 rounded-2xl border border-border hover:bg-surface/50 transition-colors">
           <div className="text-[10px] text-muted font-mono tracking-wider">STATUS</div>
@@ -66,6 +108,55 @@ export default function CurrentFile({ item }) {
         </div>
       </div>
 
+      {/* Document Intelligence Stats — only for documents */}
+      {isDocument && (docStats || sentimentLabel || languageLabel || docTypeLabel) && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+          {docTypeLabel && (
+            <div className="glass p-4 rounded-2xl border border-pink-500/30 bg-pink-500/5 hover:bg-pink-500/10 transition-colors col-span-2 sm:col-span-1">
+              <div className="text-[10px] text-pink-400 font-mono tracking-wider">DOC TYPE</div>
+              <div className="text-lg font-mono mt-2 font-bold text-pink-400 leading-tight">{docTypeLabel.name.replace('DocType: ', '')}</div>
+              <div className="text-[10px] text-muted font-mono mt-1">{Math.round(docTypeLabel.confidence)}% conf</div>
+            </div>
+          )}
+          {languageLabel && (
+            <div className="glass p-4 rounded-2xl border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors">
+              <div className="text-[10px] text-cyan-400 font-mono tracking-wider">LANGUAGE</div>
+              <div className="text-xl font-mono mt-2 font-bold text-cyan-400">{languageLabel.name.replace('Language: ', '')}</div>
+              <div className="text-[10px] text-muted font-mono mt-1">{Math.round(languageLabel.confidence)}% conf</div>
+            </div>
+          )}
+          {sentimentLabel && (
+            <div className="glass p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors">
+              <div className="text-[10px] text-amber-400 font-mono tracking-wider">SENTIMENT</div>
+              <div className="text-xl font-mono mt-2 font-bold text-amber-400">{sentimentLabel.name.replace('Sentiment: ', '')}</div>
+              <div className="text-[10px] text-muted font-mono mt-1">{Math.round(sentimentLabel.confidence)}% conf</div>
+            </div>
+          )}
+          {(docStats?.word_count || wordCountLabel) && (
+            <div className="glass p-4 rounded-2xl border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 transition-colors">
+              <div className="text-[10px] text-blue-400 font-mono tracking-wider">WORDS</div>
+              <div className="text-xl font-mono mt-2 font-bold text-blue-400">
+                {docStats?.word_count?.toLocaleString() || wordCountLabel?.name?.replace('Words: ', '') || '—'}
+              </div>
+            </div>
+          )}
+          {docStats?.sentence_count && (
+            <div className="glass p-4 rounded-2xl border border-violet-500/30 bg-violet-500/5 hover:bg-violet-500/10 transition-colors">
+              <div className="text-[10px] text-violet-400 font-mono tracking-wider">SENTENCES</div>
+              <div className="text-xl font-mono mt-2 font-bold text-violet-400">
+                {docStats.sentence_count.toLocaleString()}
+              </div>
+            </div>
+          )}
+          {piiLabel && (
+            <div className="glass p-4 rounded-2xl border border-danger/40 bg-danger/5 hover:bg-danger/10 transition-colors animate-pulse">
+              <div className="text-[10px] text-danger font-mono tracking-wider">PII ALERT</div>
+              <div className="text-lg font-mono mt-2 font-bold text-danger">{piiLabel.name.replace('⚠ ', '')}</div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Detected Labels Tags */}
         <div className="glass p-6 md:p-8 rounded-2xl border border-border">
@@ -78,16 +169,16 @@ export default function CurrentFile({ item }) {
         {/* Confidence Breakdown Bars */}
         <div className="glass p-6 md:p-8 rounded-2xl border border-border">
           <h3 className="text-[10px] font-mono tracking-widest text-muted mb-6 uppercase">// Confidence Breakdown</h3>
-          <div className="space-y-6">
+          <div className="space-y-4">
             {topLabels.length > 0 ? topLabels.map((l, i) => (
               <div key={i}>
-                <div className="flex justify-between text-xs mb-2 font-mono">
-                  <span className="text-primary font-bold uppercase tracking-tight">{l.name}</span>
-                  <span className="text-accent">{Math.round(l.confidence)}%</span>
+                <div className="flex justify-between text-xs mb-1.5 font-mono">
+                  <span className="text-primary font-bold uppercase tracking-tight truncate mr-2" title={l.name}>{l.name}</span>
+                  <span className="text-accent flex-shrink-0">{Math.round(l.confidence)}%</span>
                 </div>
                 <div className="w-full h-2 bg-surface rounded-full overflow-hidden border border-border/50">
                   <div 
-                    className={`h-full transition-all duration-1000 ${l.confidence > 90 ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' : 'bg-accent'}`} 
+                    className={`h-full transition-all duration-1000 ${getBarColor(l.name, l.confidence)}`} 
                     style={{ width: `${l.confidence}%` }} 
                   />
                 </div>
@@ -97,6 +188,42 @@ export default function CurrentFile({ item }) {
             )}
           </div>
         </div>
+
+        {/* Key Topics — only show if topics were detected */}
+        {topicLabels.length > 0 && (
+          <div className="glass p-6 md:p-8 rounded-2xl border border-violet-500/30 bg-violet-500/5">
+            <h3 className="text-[10px] font-mono tracking-widest text-violet-400 mb-6 uppercase">// Key Topics Extracted</h3>
+            <div className="flex flex-wrap gap-2">
+              {topicLabels.map((t, i) => (
+                <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-violet-500/10 border border-violet-500/25 rounded-lg text-xs text-violet-300 font-mono">
+                  <span className="font-bold">{t.name.replace('Topic: ', '')}</span>
+                  <span className="opacity-60 text-[10px]">{Math.round(t.confidence)}%</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Entities — only show if entity labels detected */}
+        {isDocument && entityLabels.length > 0 && (
+          <div className="glass p-6 md:p-8 rounded-2xl border border-emerald-500/30 bg-emerald-500/5">
+            <h3 className="text-[10px] font-mono tracking-widest text-emerald-400 mb-6 uppercase">// Named Entities</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {entityLabels.slice(0, 12).map((e, i) => {
+                const parts = e.name.split(': ')
+                const type = parts[0] || ''
+                const value = parts.slice(1).join(': ') || e.name
+                return (
+                  <div key={i} className="flex items-center gap-3 bg-surface/30 p-3 rounded-xl border border-border/50">
+                    <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded uppercase tracking-tight flex-shrink-0">{type}</span>
+                    <span className="text-xs text-primary font-medium truncate" title={value}>{value}</span>
+                    <span className="text-[10px] text-muted font-mono ml-auto flex-shrink-0">{Math.round(e.confidence)}%</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Moderation Details if Unsafe */}
         {!safe && modDetails.length > 0 && (
