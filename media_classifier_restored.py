@@ -177,6 +177,7 @@ def lambda_handler(event, context):
             elif file_ext in ['pdf', 'doc', 'docx', 'txt']:
                 file_type = 'document'
                 full_text = ""
+                embedded_images = []
 
                 # ── Step 1: Text Extraction (format-specific) ──
                 if file_ext == 'pdf':
@@ -193,6 +194,47 @@ def lambda_handler(event, context):
                     # DOCX → python-docx (requires Lambda Layer)
                     full_text = extract_docx_text(bucket, key)
                     print(f"[AEGIS] python-docx extracted {len(full_text)} chars from DOCX")
+
+                    # ALSO extract embedded images from the docx file bytes directly!
+                    try:
+                        import zipfile
+                        obj = s3.get_object(Bucket=bucket, Key=key)
+                        file_bytes = obj['Body'].read()
+                        with zipfile.ZipFile(io.BytesIO(file_bytes)) as z:
+                            image_files = [f for f in z.namelist() if f.startswith('word/media/')]
+                            for img_name in image_files:
+                                img_data = z.read(img_name)
+                                try:
+                                    rek_res = rekognition.detect_moderation_labels(
+                                        Image={'Bytes': img_data},
+                                        MinConfidence=60
+                                    )
+                                    mod_labels = rek_res.get('ModerationLabels', [])
+                                    is_img_safe = len(mod_labels) == 0
+                                    
+                                    img_alerts = [
+                                        {'name': str(m['Name']), 'confidence': Decimal(str(round(m['Confidence'], 1)))}
+                                        for m in mod_labels
+                                    ]
+                                    
+                                    embedded_images.append({
+                                        'name': str(img_name.split('/')[-1]),
+                                        'is_safe': is_img_safe,
+                                        'alerts': img_alerts
+                                    })
+                                    
+                                    if not is_img_safe:
+                                        is_safe = False
+                                        # Add embedded image alert to moderation details
+                                        for alert in img_alerts:
+                                            moderation_details.append({
+                                                'name': f"Unsafe Embedded Image ({img_name.split('/')[-1]}): {alert['name']}",
+                                                'confidence': alert['confidence']
+                                            })
+                                except Exception as img_err:
+                                    print(f"[AEGIS] Failed to scan embedded image {img_name}: {img_err}")
+                    except Exception as zip_err:
+                        print(f"[AEGIS] Failed to parse zip/docx embedded images: {zip_err}")
 
                 elif file_ext == 'txt':
                     # TXT → Direct S3 read
@@ -262,6 +304,13 @@ def lambda_handler(event, context):
         # Add document stats if available
         if doc_stats:
             item['doc_stats'] = doc_stats
+
+        # Save embedded images to DynamoDB if any were detected in DOCX
+        try:
+            if 'embedded_images' in locals() and embedded_images:
+                item['embedded_images'] = embedded_images
+        except Exception:
+            pass
 
         print(f"[AEGIS] Saving item with {len(rich_labels)} labels, safe={is_safe}, status={status}")
         table.put_item(Item=item)
