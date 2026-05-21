@@ -15,15 +15,15 @@
 }
 
 .dark {
-  --bg: #001a4d;      /* Deep Royal Navy */
-  --surface: #4169e1; /* Real Royal Blue */
-  --card: #4d79ff;
-  --border: #668cff;
-  --primary: #ffffff; /* Pure White */
-  --muted: #cbd5e1;   /* Light Slate */
-  --accent: #00f2ff;  /* Electric Cyan */
-  --accent2: #ffffff; /* White highlights */
-  --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  --bg: #050b14;      /* Deep blue-black */
+  --surface: #0b1524; /* Slightly lighter blue-black */
+  --card: #111f36;    /* Dark slate blue */
+  --border: #1e3a5f;  /* Navy border */
+  --primary: #f8fafc; /* Pure White */
+  --muted: #94a3b8;   /* Light Slate */
+  --accent: #3b82f6;  /* Royal Blue Accent */
+  --accent2: #60a5fa; /* Light Blue */
+  --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -56,6 +56,9 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Glassmorphism card */
 .glass {

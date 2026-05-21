@@ -4,11 +4,19 @@ import Dashboard from './components/Dashboard'
 import UploadZone from './components/UploadZone'
 import ResultsTable from './components/ResultsTable'
 import Analytics from './components/Analytics'
+import Reports from './components/Reports'
 import CurrentFile from './components/CurrentFile'
+import Login from './components/Login'
 import { fetchResults } from './hooks/useIMPF'
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('impf_auth') === 'true')
   const [page, setPage] = useState('dashboard')
+
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+    localStorage.removeItem('impf_auth')
+  }
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
@@ -83,9 +91,11 @@ export default function App() {
       case 'files':
         return <div className="animate-fadeIn"><ResultsTable items={items} title="ALL FILES" /></div>
       case 'unsafe':
-        return <div className="animate-fadeIn"><ResultsTable items={unsafeItems} title="UNSAFE FILES DETECTED" emptyMessage="No unsafe files found. Great!" /></div>
+        return <div className="animate-fadeIn"><ResultsTable items={unsafeItems} title="UNSAFE FILES DETECTED" emptyMessage="No unsafe files found. Great!" isUnsafePage={true} /></div>
       case 'analytics':
         return <div className="animate-fadeIn"><Analytics items={items} /></div>
+      case 'reports':
+        return <div className="animate-fadeIn"><Reports items={items} /></div>
       case 'settings':
         return (
           <div className="max-w-xl mx-auto animate-fadeIn">
@@ -107,19 +117,29 @@ export default function App() {
     }
   }
 
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={() => {
+      setIsAuthenticated(true);
+      localStorage.setItem('impf_auth', 'true');
+    }} />
+  }
+
   return (
     <div className={`${theme} transition-colors duration-300`}>
       <div className="min-h-screen bg-bg text-primary grid-bg selection:bg-accent/30">
-        <Navbar 
-          page={page} 
-          setPage={setPage} 
-          unsafeCount={newUnsafeCount} 
-          theme={theme}
-          toggleTheme={toggleTheme}
-        />
+        <div className="print:hidden">
+          <Navbar 
+            page={page} 
+            setPage={setPage} 
+            unsafeCount={newUnsafeCount} 
+            theme={theme}
+            toggleTheme={toggleTheme}
+            onLogout={handleLogout}
+          />
+        </div>
 
         {/* Mobile Theme Bar */}
-        <div className="sm:hidden border-b border-border bg-surface/50 backdrop-blur-sm px-6 py-2 flex justify-between items-center">
+        <div className="sm:hidden border-b border-border bg-surface/50 backdrop-blur-sm px-6 py-2 flex justify-between items-center print:hidden">
           <span className="text-[10px] font-bold text-muted tracking-widest uppercase">Display Mode</span>
           <button
             onClick={toggleTheme}
@@ -129,7 +149,7 @@ export default function App() {
           </button>
         </div>
         
-        <main className="max-w-[1600px] mx-auto p-4 sm:p-6 md:p-10">
+        <main className="max-w-[1600px] mx-auto p-4 sm:p-6 md:p-10 print:p-0 print:m-0">
           {renderPage()}
         </main>
       </div>

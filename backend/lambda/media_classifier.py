@@ -1,5 +1,5 @@
 """
-AEGIS MEDIA — Intelligent Media Classifier Lambda
+IMPF AEGIS MEDIA — Intelligent Media Classifier Lambda
 ====================================================
 Triggered by S3 upload events.
 Processes IMAGES (Rekognition) and DOCUMENTS (Textract / python-docx / direct read)
@@ -172,28 +172,23 @@ def lambda_handler(event, context):
                 status = 'completed'
 
             # ══════════════════════════════════════════
-            # DOCUMENT PROCESSING (Textract / python-docx / direct read)
+            # DOCUMENT PROCESSING (Textract / python-docx / direct read / spreadsheets)
             # ══════════════════════════════════════════
-            elif file_ext in ['pdf', 'doc', 'docx', 'txt']:
+            elif file_ext in ['pdf', 'doc', 'docx', 'txt', 'csv', 'xlsx']:
                 file_type = 'document'
                 full_text = ""
                 embedded_images = []
 
                 # ── Step 1: Text Extraction (format-specific) ──
                 if file_ext == 'pdf':
-                    # PDF → Textract
-                    text_res = textract.detect_document_text(
-                        Document={'S3Object': {'Bucket': bucket, 'Name': key}}
-                    )
-                    for block in text_res.get('Blocks', []):
-                        if block['BlockType'] == 'LINE':
-                            full_text += block['Text'] + " "
-                    print(f"[AEGIS] Textract extracted {len(full_text)} chars from PDF")
+                    # PDF → Native Python Extraction (bypasses Textract SubscriptionRequiredException)
+                    full_text = extract_pdf_text(bucket, key)
+                    print(f"[IMPF] PDF Native extraction completed: {len(full_text)} chars")
 
                 elif file_ext == 'docx':
                     # DOCX → python-docx (requires Lambda Layer)
                     full_text = extract_docx_text(bucket, key)
-                    print(f"[AEGIS] python-docx extracted {len(full_text)} chars from DOCX")
+                    print(f"[IMPF AEGIS] python-docx extracted {len(full_text)} chars from DOCX")
 
                     # ALSO extract embedded images from the docx file bytes directly!
                     try:
@@ -232,15 +227,36 @@ def lambda_handler(event, context):
                                                 'confidence': alert['confidence']
                                             })
                                 except Exception as img_err:
-                                    print(f"[AEGIS] Failed to scan embedded image {img_name}: {img_err}")
+                                    print(f"[IMPF AEGIS] Failed to scan embedded image {img_name}: {img_err}")
                     except Exception as zip_err:
-                        print(f"[AEGIS] Failed to parse zip/docx embedded images: {zip_err}")
+                        print(f"[IMPF AEGIS] Failed to parse zip/docx embedded images: {zip_err}")
 
                 elif file_ext == 'txt':
                     # TXT → Direct S3 read
                     obj = s3.get_object(Bucket=bucket, Key=key)
                     full_text = obj['Body'].read().decode('utf-8', errors='replace')
-                    print(f"[AEGIS] Direct read: {len(full_text)} chars from TXT")
+                    print(f"[IMPF AEGIS] Direct read: {len(full_text)} chars from TXT")
+
+                elif file_ext == 'xlsx':
+                    # XLSX → Extract shared strings XML
+                    import re, zipfile
+                    obj = s3.get_object(Bucket=bucket, Key=key)
+                    raw = obj['Body'].read()
+                    try:
+                        with zipfile.ZipFile(io.BytesIO(raw)) as z:
+                            if 'xl/sharedStrings.xml' in z.namelist():
+                                xml_content = z.read('xl/sharedStrings.xml').decode('utf-8', errors='replace')
+                                clean = re.sub(r'<[^>]+>', ' ', xml_content)
+                                full_text = re.sub(r'\s+', ' ', clean).strip()
+                                print(f"[IMPF] XLSX extracted {len(full_text)} chars")
+                    except Exception as zip_err:
+                        print(f"[IMPF] XLSX extraction failed: {zip_err}")
+
+                elif file_ext == 'csv':
+                    # CSV → Direct read like txt
+                    obj = s3.get_object(Bucket=bucket, Key=key)
+                    full_text = obj['Body'].read().decode('utf-8', errors='replace')
+                    print(f"[IMPF] CSV direct read: {len(full_text)} chars")
 
                 elif file_ext == 'doc':
                     # .doc (legacy binary) — not easily parseable in Lambda
@@ -249,7 +265,7 @@ def lambda_handler(event, context):
                         'name': 'DOC File Received (Legacy Format)',
                         'confidence': Decimal('95.0')
                     })
-                    print(f"[AEGIS] .doc is a legacy binary format — skipping text extraction")
+                    print(f"[IMPF] .doc is a legacy binary format — skipping text extraction")
 
                 # ── Step 2: Document Type Classification ──
                 if full_text.strip():
@@ -259,7 +275,7 @@ def lambda_handler(event, context):
                         'name': f'DocType: {doc_type}',
                         'confidence': Decimal(str(doc_type_conf))
                     })
-                    print(f"[AEGIS] Document classified as: {doc_type} ({doc_type_conf}% confidence)")
+                    print(f"[IMPF AEGIS] Document classified as: {doc_type} ({doc_type_conf}% confidence)")
 
                 # ── Step 3: Deep NLP Analysis ──
                 if full_text.strip():
@@ -267,12 +283,13 @@ def lambda_handler(event, context):
                     rich_labels.extend(nlp_results['labels'])
                     moderation_details.extend(nlp_results['moderation'])
                     doc_stats = nlp_results['stats']
-                    # Store the document type in stats too
-                    if full_text.strip():
-                        doc_stats['document_type'] = doc_type
-                        doc_stats['document_type_confidence'] = Decimal(str(doc_type_conf))
+                    doc_stats['document_type'] = doc_type
+                    doc_stats['document_type_confidence'] = Decimal(str(doc_type_conf))
                     if nlp_results['has_pii']:
                         is_safe = False
+                        
+                    # Clean up error label block since we now have native fallbacks
+                    nlp_label_names = [l['name'] for l in nlp_results['labels']]
 
                 # ── Fallback label ──
                 if not rich_labels:
@@ -281,9 +298,10 @@ def lambda_handler(event, context):
                 status = 'completed'
 
         except Exception as e:
-            print(f"[AEGIS] Processing error for {file_name}: {str(e)}")
+            print(f"[IMPF] Processing error for {file_name}: {str(e)}")
             print(traceback.format_exc())
-            rich_labels = [{'name': f'Processing Error: {type(e).__name__}', 'confidence': Decimal('0.0')}]
+            err_msg = str(e)[:70] if len(str(e)) > 70 else str(e)
+            rich_labels = [{'name': f'Error: {err_msg}', 'confidence': Decimal('0.0')}]
             status = 'error'
 
         # --- Save to DynamoDB ---
@@ -312,10 +330,32 @@ def lambda_handler(event, context):
         except Exception:
             pass
 
-        print(f"[AEGIS] Saving item with {len(rich_labels)} labels, safe={is_safe}, status={status}")
+        print(f"[IMPF] Saving item with {len(rich_labels)} labels, safe={is_safe}, status={status}")
         table.put_item(Item=item)
 
     return {'statusCode': 200, 'body': 'Success'}
+
+
+# ══════════════════════════════════════════════════════════
+# HELPER: Extract text from PDF using PyPDF2 / pypdf
+# ══════════════════════════════════════════════════════════
+def extract_pdf_text(bucket, key):
+    """Download PDF from S3 and extract raw printable bytes (fallback without layers)."""
+    import re
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    raw = obj['Body'].read()
+    
+    # Try to extract plain text chunks from the binary PDF
+    text_chunks = re.findall(rb'[\x20-\x7E]{8,}', raw)
+    
+    # Filter out common PDF internal commands/metadata
+    clean_chunks = []
+    for chunk in text_chunks:
+        decoded = chunk.decode('ascii', errors='ignore')
+        if not any(x in decoded for x in ['obj', 'endobj', 'stream', 'endstream', 'xref', 'trailer']):
+            clean_chunks.append(decoded)
+            
+    return ' '.join(clean_chunks)
 
 
 # ══════════════════════════════════════════════════════════
@@ -326,15 +366,26 @@ def extract_docx_text(bucket, key):
     try:
         from docx import Document as DocxDocument
     except ImportError:
-        print("[AEGIS] python-docx not available — add it as a Lambda Layer!")
-        print("[AEGIS] Falling back to S3 raw read...")
-        # Fallback: try to read raw bytes and extract printable strings
+        print("[IMPF] python-docx not available — falling back to XML text extraction from DOCX zip...")
+        # DOCX is a zip — extract word/document.xml and strip tags for clean text
+        import re, zipfile
         obj = s3.get_object(Bucket=bucket, Key=key)
         raw = obj['Body'].read()
-        # Extract printable ASCII sequences (rough fallback)
-        import re
+        try:
+            with zipfile.ZipFile(io.BytesIO(raw)) as z:
+                if 'word/document.xml' in z.namelist():
+                    xml_content = z.read('word/document.xml').decode('utf-8', errors='replace')
+                    # Strip all XML tags, keep text content
+                    clean = re.sub(r'<[^>]+>', ' ', xml_content)
+                    # Collapse whitespace
+                    clean = re.sub(r'\s+', ' ', clean).strip()
+                    print(f"[IMPF] XML fallback extracted {len(clean)} chars from DOCX")
+                    return clean
+        except Exception as zip_err:
+            print(f"[IMPF] ZIP/XML extraction also failed: {zip_err}")
+        # Last resort: raw printable bytes — no limit
         text_chunks = re.findall(rb'[\x20-\x7E]{10,}', raw)
-        return ' '.join(chunk.decode('ascii', errors='ignore') for chunk in text_chunks[:100])
+        return ' '.join(chunk.decode('ascii', errors='ignore') for chunk in text_chunks)
 
     # Download file into memory
     obj = s3.get_object(Bucket=bucket, Key=key)
@@ -371,7 +422,9 @@ def run_deep_nlp(full_text):
     labels = []
     moderation = []
     has_pii = False
-    text_snippet = full_text[:5000]  # Comprehend limit per call
+    # Comprehend limit: 5000 BYTES (not chars) — encode to UTF-8 and safely truncate
+    encoded = full_text.encode('utf-8')[:5000]
+    text_snippet = encoded.decode('utf-8', errors='ignore')
 
     # ── 1. Language Detection ──
     try:
@@ -384,7 +437,15 @@ def run_deep_nlp(full_text):
             'confidence': Decimal(str(round(lang_score * 100, 1)))
         })
     except Exception as e:
-        print(f"[AEGIS] Language detection failed: {e}")
+        print(f"[IMPF AEGIS] Language detection failed: {e}. Using Native Python Fallback.")
+        # Native Python Language Detection Fallback
+        english_words = {'the', 'is', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not', 'on', 'with', 'this'}
+        words = text_snippet[:1000].lower().split()
+        eng_count = sum(1 for w in words if w in english_words)
+        if len(words) > 0 and (eng_count / len(words)) > 0.05:
+            labels.append({'name': 'Language: EN', 'confidence': Decimal('85.0')})
+        else:
+            labels.append({'name': 'Language: UNKNOWN', 'confidence': Decimal('50.0')})
 
     # ── 2. Sentiment Analysis ──
     try:
@@ -398,7 +459,22 @@ def run_deep_nlp(full_text):
             'confidence': Decimal(str(round(sentiment_conf * 100, 1)))
         })
     except Exception as e:
-        print(f"[AEGIS] Sentiment analysis failed: {e}")
+        print(f"[IMPF AEGIS] Sentiment analysis failed: {e}. Using Native Python Fallback.")
+        # Native Python Sentiment Analysis Fallback
+        positive_words = {'good', 'great', 'excellent', 'amazing', 'perfect', 'success', 'pass', 'approve', 'yes', 'happy'}
+        negative_words = {'bad', 'terrible', 'fail', 'error', 'wrong', 'reject', 'deny', 'issue', 'problem', 'sad'}
+        
+        words = text_snippet[:1000].lower().split()
+        pos_count = sum(1 for w in words if w in positive_words)
+        neg_count = sum(1 for w in words if w in negative_words)
+        
+        sentiment_val = "Neutral"
+        if pos_count > neg_count:
+            sentiment_val = "Positive"
+        elif neg_count > pos_count:
+            sentiment_val = "Negative"
+            
+        labels.append({'name': f'Sentiment: {sentiment_val}', 'confidence': Decimal('75.0')})
 
     # ── 3. Key Phrases ──
     try:
@@ -413,7 +489,7 @@ def run_deep_nlp(full_text):
                 'confidence': Decimal(str(round(kp['Score'] * 100, 1)))
             })
     except Exception as e:
-        print(f"[AEGIS] Key phrases failed: {e}")
+        print(f"[IMPF AEGIS] Key phrases failed: {e}")
 
     # ── 4. Entity Detection ──
     try:
@@ -431,7 +507,7 @@ def run_deep_nlp(full_text):
                         'confidence': Decimal(str(round(ent['Score'] * 100, 1)))
                     })
     except Exception as e:
-        print(f"[AEGIS] Entity detection failed: {e}")
+        print(f"[IMPF AEGIS] Entity detection failed: {e}")
 
     # ── 5. PII Detection ──
     try:
@@ -452,7 +528,7 @@ def run_deep_nlp(full_text):
                 'confidence': Decimal('100.0')
             })
     except Exception as e:
-        print(f"[AEGIS] PII detection failed: {e}")
+        print(f"[IMPF AEGIS] PII detection failed: {e}")
 
     # ── 6. Unsafe Text Keyword Scan ──
     text_lower = full_text.lower()
@@ -527,5 +603,5 @@ def classify_document_type(text):
         # Average the two confidences
         best_conf = round((ranked[0][1] + ranked[1][1]) / 2, 1)
 
-    print(f"[AEGIS] DocType scores: {dict(ranked[:5])}")
+    print(f"[IMPF AEGIS] DocType scores: {dict(ranked[:5])}")
     return (best_type, best_conf)

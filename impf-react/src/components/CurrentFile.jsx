@@ -69,7 +69,7 @@ export default function CurrentFile({ item }) {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* File Header with Scan Effect */}
       <div className="glass p-6 rounded-xl border border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden group">
         <div className="absolute inset-x-0 h-1 bg-accent/30 blur-[2px] animate-scan pointer-events-none z-10 hidden group-hover:block" />
@@ -95,12 +95,12 @@ export default function CurrentFile({ item }) {
       </div>
 
       {/* Main Structural Split Page */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         
         {/* ========================================================
             LEFT COLUMN (Core Info, Security, & Stats)
             ======================================================== */}
-        <div className="space-y-6 lg:col-span-1">
+        <div className="space-y-4 lg:col-span-1">
           {/* File Telemetry Details */}
           <div className="glass p-5 rounded-2xl border border-border space-y-4">
             <h3 className="text-[10px] font-mono tracking-widest text-muted uppercase">// File Metadata</h3>
@@ -218,7 +218,7 @@ export default function CurrentFile({ item }) {
         {/* ========================================================
             RIGHT COLUMN (Deep Analytics, Lists & Media)
             ======================================================== */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="space-y-4 lg:col-span-2">
           
           {/* Document Intelligence Stats — only for documents */}
           {isDocument && (docStats || sentimentLabel || languageLabel || docTypeLabel) && (
@@ -258,6 +258,28 @@ export default function CurrentFile({ item }) {
                   <div className="text-[10px] text-emerald-400 font-mono tracking-wider">AVG WORD LENGTH</div>
                   <div className="text-xl font-mono mt-2 font-bold text-emerald-400">
                     {docStats.avg_word_length} <span className="text-xs text-muted">chars</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Data/Spreadsheet Intelligence Stats (New Feature 1) */}
+          {item.file_type === 'data' && docStats && (docStats.row_count || docStats.column_count) && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {docStats.row_count !== undefined && (
+                <div className="glass p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors">
+                  <div className="text-[10px] text-emerald-400 font-mono tracking-wider">TOTAL ROWS</div>
+                  <div className="text-xl font-mono mt-2 font-bold text-emerald-400">
+                    {docStats.row_count.toLocaleString()}
+                  </div>
+                </div>
+              )}
+              {docStats.column_count !== undefined && (
+                <div className="glass p-4 rounded-2xl border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 transition-colors">
+                  <div className="text-[10px] text-blue-400 font-mono tracking-wider">TOTAL COLUMNS</div>
+                  <div className="text-xl font-mono mt-2 font-bold text-blue-400">
+                    {docStats.column_count.toLocaleString()}
                   </div>
                 </div>
               )}
@@ -306,7 +328,7 @@ export default function CurrentFile({ item }) {
           )}
 
           {/* AI Labels & Confidence Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Detected Labels Tags */}
             <div className="glass p-6 md:p-8 rounded-2xl border border-border">
@@ -341,7 +363,7 @@ export default function CurrentFile({ item }) {
           </div>
 
           {/* Key Topics & Named Entities */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Key Topics — only show if topics were detected */}
             {topicLabels.length > 0 && (
